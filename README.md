@@ -107,7 +107,7 @@ db = NtLite(path='./db/my.sqlite3', row_type=RowTypes.dataclass)
 RowTypes|column reference
 --------|----------------
 `RowTypes.tuple`|`row[0]`
-`RowTypes.sqlite3row`([sqlite3.Row][])|`row[0]`, `row['col_name']`
+`RowTypes.sqlite3`([sqlite3.Row][])|`row[0]`, `row['col_name']`
 `RowTypes.namedtuple`|`row[0]`, `row.col_name`, `row['col_name']`
 `RowTypes.dataclass`|`row[0]`, `row.col_name`, `row['col_name']`
 
@@ -128,14 +128,16 @@ RowTypes.namedtuple(not_getitem=True, not_slot=True, not_frozen=True)
 parameter|`namedtuple`|`dataclass`
 ---------|------------|-----------
 `not_getitem`=`True`|Cannot be referenced by `['col_name']` | Cannot be referenced by `[0]` or `['col_name']`
-`not_slot`=`True`|-|Cannot register new properties
+`not_slots`=`True`|-|Cannot register new properties
 `not_frozen`=`True`|-|Become mutable (be able to set values to properties)
 
-　`NtLite`を生成するとき以下のように渡す。
+All default to `False`.
+
+When generating `NtLite` pass it as follows.
 
 ```python
 db = NtLite(row_type=RowTypes.namedtuple(not_getitem=True))
-db = NtLite(row_type=RowTypes.dataclass(not_slot=False, not_frozen=False))
+db = NtLite(row_type=RowTypes.dataclass(not_getitem=True, not_slots=True, not_frozen=True))
 ```
 
 ## API

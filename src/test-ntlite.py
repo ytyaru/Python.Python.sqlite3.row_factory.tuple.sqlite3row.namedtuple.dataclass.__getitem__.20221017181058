@@ -3,6 +3,7 @@
 import unittest
 import os
 from collections import namedtuple
+import dataclasses 
 from dataclasses import dataclass, field, Field
 from decimal import Decimal
 from datetime import datetime, date, time
@@ -10,15 +11,18 @@ from ntlite import NtLite, RowTypes, RowType, TupleRowType, Sqlite3RowType, Name
 class TestNtLite(unittest.TestCase):
     def setUp(self): pass
     def tearDown(self): pass
+    def test_rowtypes(self):
+        self.assertEqual(TupleRowType, RowTypes.tuple)
+        self.assertEqual(Sqlite3RowType, RowTypes.sqlite3)
+        self.assertEqual(NamedTupleRowType, RowTypes.namedtuple)
+        self.assertEqual(DataClassRowType, RowTypes.dataclass)
     def test_init_args_0(self):
         db = NtLite()
         self.assertEqual(':memory:', db.path)
         self.assertTrue(db.con)
         self.assertTrue(db.cur)
         self.assertEqual(NamedTupleRowType, type(db._row_type))
-        #self.assertEqual(NamedTupleRowType().row_factory, db.con.row_factory)
-        #self.assertEqual(type(NamedTupleRowType().row_factory), type(db.con.row_factory))
-        #self.assertEqual(type(NamedTupleRowType().row_factory), type(db.con.row_factory))
+        self.assertEqual(RowTypes.namedtuple, type(db._row_type))
     def test_init_path(self):
         path = 'my.db'
         if os.path.isfile(path): os.remove(path)
@@ -26,71 +30,83 @@ class TestNtLite(unittest.TestCase):
         self.assertEqual(path, db.path)
         self.assertTrue(os.path.isfile(path))
         self.assertEqual(NamedTupleRowType, type(db._row_type))
-        #self.assertEqual(NamedTupleRowType().row_factory, db.row_factory)
+        self.assertEqual(RowTypes.namedtuple, type(db._row_type))
         if os.path.isfile(path): os.remove(path)
     # row_type 型 テスト開始
     def test_init_row_type_none(self):
         db = NtLite(row_type=None)
         self.assertEqual(NamedTupleRowType, type(db._row_type))
+        self.assertEqual(RowTypes.namedtuple, type(db._row_type))
         #self.assertEqual(None, db.row_factory)
         db.exec("create table users(id integer, name text, age integer);")
         db.exec("insert into users values(?,?,?);", (0,'A',7))
         row = db.get("select id, name from users where id=?;", (0,))
         self.assertEqual(('id','name'), row._fields) # _fieldsはnamedtuple固有なので型判定に使った
-    def test_init_row_type_row_type(self):
+    # row_type RowTypes テスト開始
+    def test_init_row_type_tuple(self):
+        db = NtLite(row_type=RowTypes.tuple)
+        self.assertEqual(TupleRowType, type(db._row_type))
+        self.assertEqual(RowTypes.tuple, type(db._row_type))
+        db.exec("create table users(id integer, name text, age integer);")
+        db.exec("insert into users values(?,?,?);", (0,'A',7))
+        row = db.get("select id, name from users where id=?;", (0,))
+        self.assertEqual(tuple, type(row))
+    def test_init_row_type_sqlite_row(self):
+        db = NtLite(row_type=RowTypes.sqlite3)
+        self.assertEqual(Sqlite3RowType, type(db._row_type))
+        self.assertEqual(RowTypes.sqlite3, type(db._row_type))
+        db.exec("create table users(id integer, name text, age integer);")
+        db.exec("insert into users values(?,?,?);", (0,'A',7))
+        row = db.get("select id, name from users where id=?;", (0,))
+        self.assertEqual(['id','name'], row.keys()) # keys()はsqlite3.Row固有なので型判定に使った
+    def test_init_row_type_namedtuple(self):
+        db = NtLite(row_type=RowTypes.namedtuple)
+        self.assertEqual(NamedTupleRowType, type(db._row_type))
+        self.assertEqual(RowTypes.namedtuple, type(db._row_type))
+        db.exec("create table users(id integer, name text, age integer);")
+        db.exec("insert into users values(?,?,?);", (0,'A',7))
+        row = db.get("select id, name from users where id=?;", (0,))
+        self.assertEqual(('id','name'), row._fields) # _fieldsはnamedtuple固有なので型判定に使った
+    def test_init_row_type_dataclass(self):
+        db = NtLite(row_type=RowTypes.dataclass)
+        self.assertEqual(DataClassRowType, type(db._row_type))
+        self.assertEqual(RowTypes.dataclass, type(db._row_type))
+        db.exec("create table users(id integer, name text, age integer);")
+        db.exec("insert into users values(?,?,?);", (0,'A',7))
+        row = db.get("select id, name from users where id=?;", (0,))
+        self.assertEqual(['id','name'], list(row.__dataclass_fields__.keys())) # dataclass固有なので型判定に使った
+    # row_type 型 テスト開始
+    def test_init_row_type_row_type_from_type(self):
         db = NtLite(row_type=RowType)
         self.assertEqual(RowType, type(db._row_type))
         db.exec("create table users(id integer, name text, age integer);")
         db.exec("insert into users values(?,?,?);", (0,'A',7))
         row = db.get("select id, name from users where id=?;", (0,))
         self.assertEqual(tuple, type(row)) # row_typeがNoneやTupleRowType()の時と同じ結果
-        self.assertEqual(0, row[0]) # row_typeがNoneやTupleRowType()の時と同じ結果
-        self.assertEqual('A', row[1]) # row_typeがNoneやTupleRowType()の時と同じ結果
-
-    def test_rowtypes(self):
-        self.assertEqual(TupleRowType, RowTypes.tuple)
-        self.assertEqual(Sqlite3RowType, RowTypes.sqlite3row)
-        self.assertEqual(NamedTupleRowType, RowTypes.namedtuple)
-        self.assertEqual(DataClassRowType, RowTypes.dataclass)
-        
-    def test_init_row_type_tuple_from_rowtypes(self):
-        db = NtLite(row_type=RowTypes.tuple)
-        self.assertEqual(TupleRowType, type(db._row_type))
-        db.exec("create table users(id integer, name text, age integer);")
-        db.exec("insert into users values(?,?,?);", (0,'A',7))
-        row = db.get("select id, name from users where id=?;", (0,))
-        self.assertEqual(tuple, type(row))
-
-
-    def test_init_row_type_tuple(self):
-        db = NtLite(row_type=TupleRowType)
-        self.assertEqual(TupleRowType, type(db._row_type))
-        db.exec("create table users(id integer, name text, age integer);")
-        db.exec("insert into users values(?,?,?);", (0,'A',7))
-        row = db.get("select id, name from users where id=?;", (0,))
-        self.assertEqual(tuple, type(row))
-    def test_init_row_type_sqlite_row(self):
+        self.assertEqual(0, row[0])
+        self.assertEqual('A', row[1])
+    def test_init_row_type_sqlite_row_from_type(self):
         db = NtLite(row_type=Sqlite3RowType)
         self.assertEqual(Sqlite3RowType, type(db._row_type))
         db.exec("create table users(id integer, name text, age integer);")
         db.exec("insert into users values(?,?,?);", (0,'A',7))
         row = db.get("select id, name from users where id=?;", (0,))
         self.assertEqual(['id','name'], row.keys()) # keys()はsqlite3.Row固有なので型判定に使った
-    def test_init_row_type_namedtuple(self):
+    def test_init_row_type_namedtuple_from_type(self):
         db = NtLite(row_type=NamedTupleRowType)
         self.assertEqual(NamedTupleRowType, type(db._row_type))
         db.exec("create table users(id integer, name text, age integer);")
         db.exec("insert into users values(?,?,?);", (0,'A',7))
         row = db.get("select id, name from users where id=?;", (0,))
         self.assertEqual(('id','name'), row._fields) # _fieldsはnamedtuple固有なので型判定に使った
-    def test_init_row_type_dataclass(self):
+    def test_init_row_type_dataclass_from_type(self):
         db = NtLite(row_type=DataClassRowType)
         self.assertEqual(DataClassRowType, type(db._row_type))
         db.exec("create table users(id integer, name text, age integer);")
         db.exec("insert into users values(?,?,?);", (0,'A',7))
         row = db.get("select id, name from users where id=?;", (0,))
         self.assertEqual(['id','name'], list(row.__dataclass_fields__.keys())) # dataclass固有なので型判定に使った
-    def test_init_row_type_another(self): # RowType継承クラス以外の型が渡されたらNamedTupleRowType
+    def test_init_row_type_from_type_another_class(self): # RowType継承クラス以外の型が渡されたらNamedTupleRowType
         class C: pass
         db = NtLite(row_type=C)
         self.assertEqual(NamedTupleRowType, type(db._row_type))
@@ -98,10 +114,6 @@ class TestNtLite(unittest.TestCase):
         db.exec("insert into users values(?,?,?);", (0,'A',7))
         row = db.get("select id, name from users where id=?;", (0,))
         self.assertEqual(('id','name'), row._fields) # _fieldsはnamedtuple固有なので型判定に使った
-    """
-     def test_init_row_type_sqlite_row(self):
-        db = NtLite(row_type=)
-    """
     # row_type インスタンス テスト開始
     def test_init_row_type_row_type_instance(self):
         db = NtLite(row_type=RowType())
@@ -147,7 +159,6 @@ class TestNtLite(unittest.TestCase):
         row = db.get("select id, name from users where id=?;", (0,))
         self.assertEqual(('id','name'), row._fields) # _fieldsはnamedtuple固有なので型判定に使った
     # row_type テスト終了
-
     def test_exec(self):
         db = NtLite()
         res = db.exec("create table users(id integer, name text, age integer);")
@@ -163,7 +174,7 @@ class TestNtLite(unittest.TestCase):
         res = db.exec("create table users(id integer, name text, age integer);")
         row = db.exec("select count(*) from users;").fetchone() # [0]で参照できる。列名不要のためcount(*)という名前でエラーにならず
         self.assertEqual(0, row[0])
-    def test_exec_fetch_sqlite3row(self):
+    def test_exec_fetch_sqlite3(self):
         db = NtLite(row_type=Sqlite3RowType)
         res = db.exec("create table users(id integer, name text, age integer);")
         row = db.exec("select count(*) from users;").fetchone() # 列名は文字列型のためcount(*)という名前でエラーにならず
@@ -238,7 +249,7 @@ commit;
         db.exec("create table users(id integer, name text, age integer);")
         db.execm("insert into users values(?,?,?);", [(0,'A',7),(1,'B',8)])
         self.assertEqual('A', db.get("select name from users where id=?;", (0,))['name'])
-    def test_all_fields_from_row_by_sqlite3row(self):
+    def test_all_fields_from_row_by_sqlite3(self):
         db = NtLite(row_type=Sqlite3RowType)
         db.exec("create table users(id integer, name text, age integer);")
         db.execm("insert into users values(?,?,?);", [(0,'A',7),(1,'B',8)])
@@ -281,6 +292,22 @@ commit;
         self.assertEqual('A', row.name)
         self.assertEqual(0, row['id'])
         self.assertEqual('A', row['name'])
+        with self.assertRaises(AttributeError) as cm: # 読取専用。イミュータブル。
+            row.id = 999
+        self.assertEqual(cm.exception.args[0], "can't set attribute")
+    def test_ref_by_not_getitem_namedtuple(self):
+        db = NtLite(row_type=RowTypes.namedtuple(not_getitem=True))
+        db.exec("create table users(id integer, name text, age integer);")
+        db.execm("insert into users values(?,?,?);", [(0,'A',7),(1,'B',8)])
+        row = db.get("select id, name from users where id=?;", (0,))
+        self.assertEqual(0, row[0])
+        self.assertEqual('A', row[1])
+        self.assertEqual(0, row.id)
+        self.assertEqual('A', row.name)
+        with self.assertRaises(TypeError) as cm:
+            self.assertEqual(0, row['id'])
+            self.assertEqual('A', row['name'])
+        self.assertEqual(cm.exception.args[0], "tuple indices must be integers or slices, not str")
     def test_ref_by_dataclass(self):
         db = NtLite(row_type=DataClassRowType)
         db.exec("create table users(id integer, name text, age integer);")
@@ -292,7 +319,68 @@ commit;
         self.assertEqual('A', row.name)
         self.assertEqual(0, row['id'])
         self.assertEqual('A', row['name'])
-
+        self.assertFalse(hasattr(row, '__dict__')) # slots=True
+        with self.assertRaises(TypeError) as cm: # 新しいプロパティを作れない代わりに省メモリ
+            row.some_prop = 'some_value'
+        self.assertEqual(cm.exception.args[0], "super(type, obj): obj must be an instance or subtype of type")
+        with self.assertRaises(dataclasses.FrozenInstanceError) as cm: # 読取専用。イミュータブル。
+            row.id = 999
+        self.assertEqual(cm.exception.args[0], "cannot assign to field 'id'")
+    def test_ref_by_not_getitem_dataclass(self):
+        db = NtLite(row_type=RowTypes.dataclass(not_getitem=True))
+        db.exec("create table users(id integer, name text, age integer);")
+        db.execm("insert into users values(?,?,?);", [(0,'A',7),(1,'B',8)])
+        row = db.get("select id, name from users where id=?;", (0,))
+        self.assertEqual(0, row.id)
+        self.assertEqual('A', row.name)
+        with self.assertRaises(TypeError) as cm: # [int]で参照できない。__getitem__がないから。
+            self.assertEqual(0, row[0])
+            self.assertEqual('A', row[1])
+        self.assertEqual(cm.exception.args[0], "'Row' object is not subscriptable")
+        with self.assertRaises(TypeError) as cm: # [str]で参照できない。__getitem__がないから。
+            self.assertEqual(0, row['id'])
+            self.assertEqual('A', row['name'])
+        self.assertEqual(cm.exception.args[0], "'Row' object is not subscriptable")
+        with self.assertRaises(TypeError) as cm: # 新しいプロパティを作れない代わりに省メモリ
+            row.some_prop = 'some_value'
+        self.assertEqual(cm.exception.args[0], "super(type, obj): obj must be an instance or subtype of type")
+        with self.assertRaises(dataclasses.FrozenInstanceError) as cm: # 読取専用。イミュータブル。
+            row.id = 999
+        self.assertEqual(cm.exception.args[0], "cannot assign to field 'id'")
+    def test_ref_by_not_slots_dataclass(self):
+        db = NtLite(row_type=RowTypes.dataclass(not_slots=True))
+        db.exec("create table users(id integer, name text, age integer);")
+        db.execm("insert into users values(?,?,?);", [(0,'A',7),(1,'B',8)])
+        row = db.get("select id, name from users where id=?;", (0,))
+        self.assertEqual(0, row[0])
+        self.assertEqual('A', row[1])
+        self.assertEqual(0, row.id)
+        self.assertEqual('A', row.name)
+        self.assertEqual(0, row['id'])
+        self.assertEqual('A', row['name'])
+        self.assertTrue(hasattr(row, '__dict__')) # slots=False
+        with self.assertRaises(dataclasses.FrozenInstanceError) as cm: # slotsでないので新しいプロパティを作れるがfrozenのためエラー
+            row.some_prop = 'some_value'
+        self.assertEqual(cm.exception.args[0], "cannot assign to field 'some_prop'")
+        with self.assertRaises(dataclasses.FrozenInstanceError) as cm: # 読取専用。イミュータブル。
+            row.id = 999
+        self.assertEqual(cm.exception.args[0], "cannot assign to field 'id'")
+    def test_ref_by_not_frozen_dataclass(self):
+        db = NtLite(row_type=RowTypes.dataclass(not_frozen=True))
+        db.exec("create table users(id integer, name text, age integer);")
+        db.execm("insert into users values(?,?,?);", [(0,'A',7),(1,'B',8)])
+        row = db.get("select id, name from users where id=?;", (0,))
+        self.assertEqual(0, row[0])
+        self.assertEqual('A', row[1])
+        self.assertEqual(0, row.id)
+        self.assertEqual('A', row.name)
+        self.assertEqual(0, row['id'])
+        self.assertEqual('A', row['name'])
+        self.assertFalse(hasattr(row, '__dict__')) # slots=True
+        with self.assertRaises(AttributeError) as cm: # flozenでないのにslotsだから新しいプロパティを作れないし省メモリでもない
+            row.some_prop = 'some_value'
+        self.assertEqual(cm.exception.args[0], "'Row' object has no attribute 'some_prop'")
+        row.id = 999 # ミュータブル。frozenでないので代入可能
     def test_table_names(self):
         db = NtLite()
         names = db.table_names()

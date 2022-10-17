@@ -130,11 +130,13 @@ parameter|namedtuple|dataclass
 `not_slot`=`True`|-|新しいプロパティを登録できなくなる
 `not_frozen`=`True`|-|ミュータブルになる（プロパティに値をセットできるようになる）
 
+　デフォルトはすべて`False`。
+
 　`NtLite`を生成するとき以下のように渡す。
 
 ```python
 db = NtLite(row_type=RowTypes.namedtuple(not_getitem=True))
-db = NtLite(row_type=RowTypes.dataclass(not_slot=False, not_frozen=False))
+db = NtLite(row_type=RowTypes.dataclass(not_getitem=True, not_slot=True, not_frozen=True))
 ```
 
 ## SQL実行
