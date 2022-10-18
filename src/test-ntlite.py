@@ -430,17 +430,18 @@ commit;
         self.assertEqual(list, type(info))
         self.assertEqual(5, len(info))
         #self.assertEqual(tuple, type(info[0]))
-        self.assertEqual([0,'id','INTEGER',0,None,1], [*info[0]])
-        self.assertEqual([1,'name','TEXT',1,None,0], [*info[1]])
-        self.assertEqual([2,'value','REAL',0,None,0], [*info[2]])
-        self.assertEqual([3,'birth','datetime',0,None,0], [*info[3]])
-        self.assertEqual([4,'img','BLOB',0,None,0], [*info[4]])
+        self.assertEqual([0,'id','INTEGER',0,None,1,0], [*info[0]])
+        self.assertEqual([1,'name','TEXT',1,None,0,0], [*info[1]])
+        self.assertEqual([2,'value','REAL',0,None,0,0], [*info[2]])
+        self.assertEqual([3,'birth','datetime',0,None,0,0], [*info[3]])
+        self.assertEqual([4,'img','BLOB',0,None,0,0], [*info[4]])
         self.assertEqual(0, info[0].cid)
         self.assertEqual('id', info[0].name)
         self.assertEqual('INTEGER', info[0].type)
         self.assertEqual(0, info[0].notnull)
         self.assertEqual(None, info[0].dflt_value)
         self.assertEqual(1, info[0].pk)
+        self.assertEqual(0, info[0].hidden)
 
 
 if __name__ == '__main__':
