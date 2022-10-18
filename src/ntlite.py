@@ -51,9 +51,12 @@ class NtLite:
         self._set_row_factory()
         self._cur = self._con.cursor()
     def __del__(self): self._con.close()
-    def table_names(self): return [row.name for row in self.gets("select name from sqlite_master where type='table';")]
-    def column_names(self, table_name): return [row.name for row in self.table_info(table_name)]
+#    def table_names(self): return [row.name for row in self.gets("select name from sqlite_master where type='table';")]
+#    def column_names(self, table_name): return [row.name for row in self.table_info(table_name)]
+    def table_names(self): return tuple([row.name for row in self.gets("select name from sqlite_master where type='table';")])
+    def column_names(self, table_name): return tuple([row.name for row in self.table_info(table_name)])
     def table_info(self, table_name): return self.gets(f"PRAGMA table_info('{table_name}');")
+    def table_xinfo(self, table_name): return self.gets(f"PRAGMA table_xinfo('{table_name}');")
     def exec(self, sql, params=()): return self.con.execute(sql, params)
     def execm(self, sql, params=()): return self.con.executemany(sql, params)
     def execs(self, sql): return self.con.executescript(sql)
@@ -78,5 +81,4 @@ class NtLite:
         self._row_type = v if issubclass(type(v), RowType) else NamedTupleRowType()
     def _set_row_factory(self):
         self._con.row_factory = self._row_type.row_factory if issubclass(type(self._row_type), RowType) else NamedTupleRowType().row_factory
-        print(self._con.row_factory, self._row_type)
 

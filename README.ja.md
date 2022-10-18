@@ -8,9 +8,9 @@
 
 # デモ
 
-* [demo](https://ytyaru.github.io/Python.Python.sqlite3.row_factory.tuple.sqlite3row.namedtuple.dataclass.__getitem__.20221017181058/)
+* [demo](https://ytyaru.github.io/Python.sqlite3.row_factory.tuple.sqlite3row.namedtuple.dataclass.__getitem__.20221017181058/)
 
-![img](https://github.com/ytyaru/Python.Python.sqlite3.row_factory.tuple.sqlite3row.namedtuple.dataclass.__getitem__.20221017181058/blob/master/doc/0.png?raw=true)
+![img](https://github.com/ytyaru/Python.sqlite3.row_factory.tuple.sqlite3row.namedtuple.dataclass.__getitem__.20221017181058/blob/master/doc/0.png?raw=true)
 
 # 特徴
 
@@ -68,8 +68,8 @@ pyenv install 3.10.5
 ## このリポジトリ
 
 ```sh
-git clone https://github.com/ytyaru/Python.Python.sqlite3.row_factory.tuple.sqlite3row.namedtuple.dataclass.__getitem__.20221017181058
-cd Python.Python.sqlite3.row_factory.tuple.sqlite3row.namedtuple.dataclass.__getitem__.20221017181058/src
+git clone https://github.com/ytyaru/Python.sqlite3.row_factory.tuple.sqlite3row.namedtuple.dataclass.__getitem__.20221017181058
+cd Python.sqlite3.row_factory.tuple.sqlite3row.namedtuple.dataclass.__getitem__.20221017181058/src
 ```
 
 # 使い方
